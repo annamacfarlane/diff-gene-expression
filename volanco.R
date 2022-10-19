@@ -11,11 +11,35 @@
 library(dplyr)
 library(ggplot2)
 
-de=read.csv('results_22v33.csv')
-symbol=read.delim('micewithsymbol.txt')
+#de=read.csv('results_22v33.csv')
+#de=read.csv('results_33HNv33.csv')
+#de=read.csv('results_44HNv44.csv')
+#de=read.csv('results_44v22.csv')
+de=read.csv('results_44v33.csv')
+#de=read.csv('results_HNv22.csv')
+#de=read.csv('results_HNv33.csv')
+#de=read.csv('results_HNv44.csv')
+sym=read.delim('micewithsymbol.txt')
+#sym=read.csv('mikes_age.csv')
+
+#gene_iDs=read.delim('micewithsymbol.txt',sep="\t", header = T) #%>%select(gene_id, sym)
+#index=match(  data$gene_symbol,gene_iDs$gene_id)
+#sum(is.na(index))
+#data$gene_symbol=gene_iDs$sym[index]
+
+
+#de$symbol=sym$Gene.Symbol[match(de$X, sym$Gene)]
 
 # Filtering for adjust p-values less than 0.05
 de<-de[de$padj<0.05,]
+
+# greaater or less than 1 
+de[de$log2FoldChange>10,3]=10
+de[de$log2FoldChange<-10,3]=-10
+
+#de<-de[de$log2FoldChange<10,]
+#de<-de[de$log2FoldChange>-10,]
+de<-de[de$padj>10**-5,]
 
 # The basic scatter plot: x is "log2FoldChange", y is "padj"
 ggplot(data=de, aes(x=log2FoldChange, y=padj)) + geom_point()
@@ -69,10 +93,15 @@ p3
 
 # Now write down the name of genes beside the points...
 # Create a new column "delabel" to de, that will contain the name of genes differentially expressed (NA in case they are not)
-de$delabel <- NA
-de$delabel[de$diffexpressed != "NO"] <- de$gene_symbol[de$diffexpressed != "NO"]
+de$symbol=sym$sym[match(de$X, sym$gene_id)]
+de$symbol[de$diffexpressed=='NO'] = NA
 
-ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) + 
+#de$delabel <- NA
+#de$delabel[de$diffexpressed != "NO"] <- de$gene_symbol[de$diffexpressed != "NO"]
+
+#ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) + 
+ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=symbol)) + 
+  scale_x_continuous(limits = c(-10, 10))+
   geom_point() + 
   theme_minimal() +
   geom_text()
@@ -82,7 +111,8 @@ ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=d
 # load library
 library(ggrepel)
 # plot adding up all layers we have seen so far
-ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) +
+ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=symbol)) +
+  scale_x_continuous(limits = c(-10, 10))+
   geom_point() + 
   theme_minimal() +
   geom_text_repel() +
